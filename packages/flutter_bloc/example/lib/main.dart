@@ -13,6 +13,7 @@ class SimpleBlocDelegate extends BlocDelegate {
 }
 
 void main() {
+  BlocProvider<Bloc>(blocs: [CounterBloc(), TestBloc()],child: Text(""),);
   BlocSupervisor().delegate = SimpleBlocDelegate();
   runApp(MyApp());
 }
@@ -107,5 +108,14 @@ class CounterBloc extends Bloc<CounterEvent, int> {
     if (event is Decrement) {
       yield state - 1;
     }
+  }
+}
+class TestBloc extends Bloc<dynamic, dynamic> {
+  @override
+  Null get initialState => null;
+
+  @override
+  Stream mapEventToState(dynamic state, dynamic event) {
+    return null;
   }
 }

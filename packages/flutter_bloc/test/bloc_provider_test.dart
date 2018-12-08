@@ -99,6 +99,8 @@ class SimpleBloc extends Bloc<dynamic, String> {
   }
 }
 
+
+
 void main() {
   group('BlocProvider', () {
     testWidgets('throws if initialized with no bloc and no child',
@@ -137,6 +139,19 @@ void main() {
         bloc: _bloc,
         child: _child,
       ));
+
+      testWidgets('throws if no bloc of type is found',
+          (WidgetTester tester) async {
+
+        final CounterBloc _bloc = CounterBloc();
+        final CounterPage _child = CounterPage();
+        await tester.pumpWidget(MyApp(
+          bloc: _bloc,
+          child: _child,
+        ));
+
+        expect(tester.takeException(), isInstanceOf<FlutterError>());
+      });
 
       final Finder _counterFinder = find.byKey((Key('counter_text')));
       expect(_counterFinder, findsOneWidget);
