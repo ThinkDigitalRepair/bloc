@@ -44,7 +44,7 @@ class BlocProvider extends StatefulWidget {
           'The context used was:\n'
           '  $context');
     }
-    return provider?.blocs?.firstWhere((bloc) => bloc.runtimeType == type) as B;
+    return provider?.blocs?.firstWhere((bloc) => bloc is B) as B;
   }
 
   static Type _typeOf<B>() => B;
