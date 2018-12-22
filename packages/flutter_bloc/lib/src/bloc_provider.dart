@@ -30,10 +30,10 @@ class BlocProvider extends StatefulWidget {
   /// Method that allows widgets to access the bloc as long as their `BuildContext`
   /// contains a `BlocProvider` instance.
   static B of<B extends Bloc<dynamic, dynamic>>(BuildContext context) {
-    final type = _typeOf<_BlocProviderInherited<B>>();
+    final Type type = _typeOf<B>();
     print('of $type');
-    final _BlocProviderInherited<B> provider =
-        context.ancestorInheritedElementForWidgetOfExactType(type)?.widget;
+    final BlocProvider provider =
+        (context.ancestorWidgetOfExactType(BlocProvider) as BlocProvider);
 
     if (provider == null) {
       throw FlutterError(
@@ -44,7 +44,7 @@ class BlocProvider extends StatefulWidget {
           'The context used was:\n'
           '  $context');
     }
-    return provider?.bloc;
+    return provider?.blocs?.firstWhere((bloc) => bloc.runtimeType == type) as B;
   }
 
   static Type _typeOf<B>() => B;
@@ -52,36 +52,5 @@ class BlocProvider extends StatefulWidget {
 
 class _BlocProviderState extends State<BlocProvider> {
   @override
-  Widget build(BuildContext context) =>
-      _buildBlocProviders(widget.blocs, widget.child);
-
-  Widget _buildBlocProviders(List<Bloc> blocs, Widget child) {
-    return blocs.length == 1
-        ? _BlocProviderInherited(
-            bloc: blocs.first,
-            child: child,
-          )
-        : _BlocProviderInherited(
-            bloc: blocs.removeAt(0),
-            child: _buildBlocProviders(blocs, child),
-          );
-  }
-}
-
-class _BlocProviderInherited<B extends Bloc<dynamic, dynamic>>
-    extends InheritedWidget {
-  _BlocProviderInherited({
-    Key key,
-    @required Widget child,
-    @required this.bloc,
-  }) : super(key: key, child: child) {
-    print('building ${_typeOf<B>()}');
-  }
-
-  final B bloc;
-
-  static Type _typeOf<B>() => B;
-
-  @override
-  bool updateShouldNotify(_BlocProviderInherited oldWidget) => false;
+  Widget build(BuildContext context) => widget.child;
 }

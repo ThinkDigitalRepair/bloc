@@ -24,14 +24,71 @@ class MyApp extends StatefulWidget {
 
 class MyAppState extends State<MyApp> {
   final CounterBloc _counterBloc = CounterBloc();
+  final CounterBloc2 _counterBloc2 = CounterBloc2();
+  Bloc currentBloc;
+  String title;
+
+  Widget _body;
+  @override
+  void initState() {
+    currentBloc = _counterBloc;
+    _body = CounterPage();
+    title = 'Counter';
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       home: BlocProvider(
-        blocs: [_counterBloc],
-        child: CounterPage(),
+        blocs: [_counterBloc, _counterBloc2],
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(title),
+            actions: <Widget>[
+              FlatButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _body = CounterPage2();
+                      currentBloc = _counterBloc2;
+                      title = "Counter2";
+                    });
+                  },
+                  icon: Icon(Icons.keyboard_arrow_right),
+                  label: Text("Go to #2"))
+            ],
+          ),
+          body: _body,
+          floatingActionButton: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 5.0),
+                child: FloatingActionButton(
+                  child: Icon(Icons.add),
+                  onPressed: () {
+                    currentBloc.dispatch(currentBloc is CounterBloc
+                        ? Increment()
+                        : Increment2());
+                  },
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 5.0),
+                child: FloatingActionButton(
+                  child: Icon(Icons.remove),
+                  onPressed: () {
+                    currentBloc.dispatch(currentBloc is CounterBloc
+                        ? Decrement()
+                        : Decrement2());
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -48,43 +105,35 @@ class CounterPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final CounterBloc _counterBloc = BlocProvider.of<CounterBloc>(context);
 
-    return Scaffold(
-      appBar: AppBar(title: Text('Counter')),
-      body: BlocBuilder<CounterEvent, int>(
-        bloc: _counterBloc,
-        builder: (BuildContext context, int count) {
-          return Center(
-            child: Text(
-              '$count',
-              style: TextStyle(fontSize: 24.0),
-            ),
-          );
-        },
-      ),
-      floatingActionButton: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: <Widget>[
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 5.0),
-            child: FloatingActionButton(
-              child: Icon(Icons.add),
-              onPressed: () {
-                _counterBloc.dispatch(Increment());
-              },
-            ),
+    return BlocBuilder<CounterEvent, int>(
+      bloc: _counterBloc,
+      builder: (BuildContext context, int count) {
+        return Center(
+          child: Text(
+            '$count',
+            style: TextStyle(fontSize: 24.0),
           ),
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 5.0),
-            child: FloatingActionButton(
-              child: Icon(Icons.remove),
-              onPressed: () {
-                _counterBloc.dispatch(Decrement());
-              },
-            ),
+        );
+      },
+    );
+  }
+}
+
+class CounterPage2 extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final CounterBloc2 _counterBloc2 = BlocProvider.of<CounterBloc2>(context);
+
+    return BlocBuilder<Counter2Event, int>(
+      bloc: _counterBloc2,
+      builder: (BuildContext context, int count) {
+        return Center(
+          child: Text(
+            '$count',
+            style: TextStyle(fontSize: 24.0),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -111,6 +160,33 @@ class CounterBloc extends Bloc<CounterEvent, int> {
       yield currentState + 1;
     }
     if (event is Decrement) {
+      yield currentState - 1;
+    }
+  }
+}
+
+abstract class Counter2Event {}
+
+class Increment2 extends Counter2Event {
+  @override
+  String toString() => 'Increment2';
+}
+
+class Decrement2 extends Counter2Event {
+  @override
+  String toString() => 'Decrement2';
+}
+
+class CounterBloc2 extends Bloc<Counter2Event, int> {
+  @override
+  int get initialState => 0;
+
+  @override
+  Stream<int> mapEventToState(int currentState, Counter2Event event) async* {
+    if (event is Increment2) {
+      yield currentState + 1;
+    }
+    if (event is Decrement2) {
       yield currentState - 1;
     }
   }
