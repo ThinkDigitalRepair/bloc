@@ -14,7 +14,8 @@ class SimpleBlocDelegate extends BlocDelegate {
 
 void main() {
   BlocSupervisor().delegate = SimpleBlocDelegate();
-  runApp(MyApp());
+  final navigationBloc = NavigationBloc();
+  runApp(BlocsProvider(blocs: [navigationBloc], child: MyApp()));
 }
 
 class MyApp extends StatefulWidget {
@@ -23,15 +24,51 @@ class MyApp extends StatefulWidget {
 }
 
 class MyAppState extends State<MyApp> {
-  final CounterBloc _counterBloc = CounterBloc();
+  final _counterBloc = CounterBloc();
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      home: BlocProvider<CounterBloc>(
-        bloc: _counterBloc,
-        child: CounterPage(),
+    return BlocsProvider(
+      blocs: [SayHiBloc()],
+      child: MaterialApp(
+        title: 'Flutter Demo',
+        home: BlocProvider<CounterBloc>(
+          bloc: _counterBloc,
+          child: Scaffold(
+            body: BlocBuilder<NavigationEvent, int>(
+                bloc:
+                    BlocsProvider.of(context, NavigationBloc) as NavigationBloc,
+                builder: (BuildContext context, int state) {
+                  return [CounterPage(), SecondPage()][state];
+                }),
+            bottomNavigationBar: BlocBuilder<NavigationEvent, int>(
+              bloc: BlocsProvider.of(context, NavigationBloc) as NavigationBloc,
+              builder: (BuildContext context, int state) {
+                return BottomNavigationBar(
+                  currentIndex: state,
+                  onTap: (int index) =>
+                      BlocsProvider.of(context, NavigationBloc)
+                          .dispatch(NavigateTo(index)),
+                  items: [
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.looks_one),
+                      title: Text("Single Bloc"),
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.looks_two),
+                      title: Text("Multiple Bloc"),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -89,6 +126,33 @@ class CounterPage extends StatelessWidget {
   }
 }
 
+class SecondPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    SayHiBloc sayHiBloc = BlocsProvider.of(context, SayHiBloc);
+    return Center(
+      child: BlocBuilder<SayHiEvent, String>(
+        bloc: sayHiBloc,
+        builder: (BuildContext context, String state) {
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Container(
+                width: 150,
+                child: TextField(
+                  decoration: InputDecoration(labelText: "Name"),
+                  onChanged: (String text) => sayHiBloc.dispatch(SayHiTo(text)),
+                ),
+              ),
+              Text(state)
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
 abstract class CounterEvent {}
 
 class Increment extends CounterEvent {
@@ -113,5 +177,67 @@ class CounterBloc extends Bloc<CounterEvent, int> {
     if (event is Decrement) {
       yield currentState - 1;
     }
+  }
+}
+
+class NavigationBloc extends Bloc<NavigationEvent, int> {
+  @override
+  int get initialState => 0;
+
+  @override
+  Stream<int> mapEventToState(int currentState, event) async* {
+    if (event is NavigateTo)
+      yield event.index;
+    else
+      yield currentState;
+  }
+}
+
+class NavigationEvent {}
+
+class NavigateTo extends NavigationEvent {
+  final int index;
+
+  NavigateTo(this.index);
+}
+
+class SayHiBloc extends Bloc<SayHiEvent, String> {
+  @override
+  String get initialState => "No one";
+
+  @override
+  void onTransition(Transition<SayHiEvent, String> transition) {
+    print(transition);
+  }
+
+  @override
+  Stream<SayHiEvent> transform(Stream<SayHiEvent> events) {
+    return events.transform(
+        StreamTransformer.fromHandlers(handleData: (SayHiEvent event, sink) {
+      if (event is SayHiTo) {
+        sink.add(SayHiTo("Hi, " + event.name));
+      }
+    }));
+  }
+
+  @override
+  Stream<String> mapEventToState(String currentState, event) async* {
+    if (event is SayHiTo)
+      yield event.name;
+    else
+      yield currentState;
+  }
+}
+
+class SayHiEvent {}
+
+class SayHiTo extends SayHiEvent {
+  final String name;
+
+  SayHiTo(this.name);
+
+  @override
+  String toString() {
+    return "Saying hi to name $name";
   }
 }

@@ -14,9 +14,9 @@ typedef BlocWidgetBuilder<S> = Widget Function(BuildContext context, S state);
 /// BlocBuilder analogous to [StreamBuilder] but has simplified API
 /// to reduce the amount of boilerplate code needed
 /// as well as bloc-specific performance improvements.
-class BlocBuilder<E, S> extends BlocBuilderBase<E, S> {
-  final Bloc<E, S> bloc;
-  final BlocWidgetBuilder<S> builder;
+class BlocBuilder<Event, State> extends BlocBuilderBase<Event, State> {
+  final Bloc<Event, State> bloc;
+  final BlocWidgetBuilder<State> builder;
 
   const BlocBuilder({Key key, @required this.bloc, @required this.builder})
       : assert(bloc != null),
@@ -24,7 +24,7 @@ class BlocBuilder<E, S> extends BlocBuilderBase<E, S> {
         super(key: key, bloc: bloc);
 
   @override
-  Widget build(BuildContext context, S state) => builder(context, state);
+  Widget build(BuildContext context, State state) => builder(context, state);
 }
 
 /// Base class for widgets that build themselves based on interaction with
